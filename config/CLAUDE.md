@@ -13,7 +13,7 @@ Pour CHAQUE action, CHAQUE decision, CHAQUE ligne de code :
 
 ## Workflow obligatoire (bypassable avec "skip [etape]")
 
-Pour toute demande de creation d'application ou de feature substantielle, suis ce workflow dans l'ordre :
+Pour TOUTE demande, quelle que soit sa taille ou complexite, suis ce workflow dans l'ordre :
 
 ### 1. BRAINSTORM — Reflexion en profondeur
 - Utilise le skill `superpowers:brainstorming` pour explorer le besoin
@@ -25,7 +25,7 @@ Pour toute demande de creation d'application ou de feature substantielle, suis c
   - Verifie que l'approche repond au BESOIN reel (pas juste au besoin technique)
   - Challenge tes propres hypotheses : "est-ce que je fais ca par habitude ou parce que c'est optimal ?"
   - Presente les compromis honnetement a l'utilisateur avant de trancher
-- **Skip si** : l'utilisateur dit "skip brainstorm" ou la tache est triviale (< 1 fichier)
+- **Skip si** : l'utilisateur dit "skip brainstorm"
 
 ### 2. PLAN
 - Utilise le skill `superpowers:writing-plans` pour ecrire un plan detaille
@@ -374,5 +374,5 @@ Pour tout projet avec un backend :
 - Ne jamais ajouter "Co-Authored-By: Claude" dans les commits
 - Les commits doivent toujours apparaitre au nom de l'utilisateur, JAMAIS au nom de Claude
 - Toujours utiliser des sous-agents en parallele quand les taches sont independantes
-- Preferer les git worktrees pour isoler le travail sur les features
+- Ne PAS utiliser de git worktrees — travailler directement sur la branche
 - Commiter regulierement (une feature = un commit minimum)
