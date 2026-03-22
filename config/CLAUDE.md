@@ -13,6 +13,14 @@ Pour CHAQUE action, CHAQUE decision, CHAQUE ligne de code :
 
 ## Workflow obligatoire (bypassable avec "skip [etape]")
 
+**CE WORKFLOW PRIME SUR TOUT** — y compris les skills superpowers. Les skills sont des OUTILS au service de ce workflow, pas des remplacements. Si un skill propose un flow different, suis quand meme les etapes ci-dessous et utilise le skill comme outil a l'interieur de l'etape appropriee.
+
+**Cas des bugs** : pour un bug, le workflow s'adapte mais reste obligatoire :
+1. BRAINSTORM → comprendre le bug en profondeur (reproduire, identifier la cause racine, PAS juste le symptome)
+2. PLAN → strategie de fix (utilise `superpowers:systematic-debugging` comme outil ici)
+3. IMPLEMENT → TDD : ecris d'abord un test qui reproduit le bug, puis fixe
+4. SECURE/VERIFY/REVIEW/PROGRESS → comme d'habitude
+
 Pour TOUTE demande, quelle que soit sa taille ou complexite, suis ce workflow dans l'ordre :
 
 ### 1. BRAINSTORM — Reflexion en profondeur
