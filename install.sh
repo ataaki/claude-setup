@@ -309,8 +309,8 @@ install_claude_native() {
         Darwin)
             # macOS: try brew first
             if command_exists brew; then
-                info "Tentative: brew install claude-code..."
-                if brew install claude-code 2>/dev/null; then
+                info "Tentative: brew install --cask claude-code..."
+                if brew install --cask claude-code 2>/dev/null; then
                     if command_exists claude; then
                         success "Claude Code installe via Homebrew"
                         return 0
@@ -319,7 +319,7 @@ install_claude_native() {
             fi
             # macOS: try the official installer script
             info "Tentative: installeur officiel macOS..."
-            if curl -fsSL https://cli.anthropic.com/install.sh | sh 2>/dev/null; then
+            if curl -fsSL https://claude.ai/install.sh | sh 2>/dev/null; then
                 export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
                 if command_exists claude; then
                     success "Claude Code installe via installeur officiel"
@@ -330,7 +330,7 @@ install_claude_native() {
         Linux)
             # Linux: try the official installer script
             info "Tentative: installeur officiel Linux..."
-            if curl -fsSL https://cli.anthropic.com/install.sh | sh 2>/dev/null; then
+            if curl -fsSL https://claude.ai/install.sh | sh 2>/dev/null; then
                 export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
                 if command_exists claude; then
                     success "Claude Code installe via installeur officiel"
