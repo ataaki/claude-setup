@@ -1,49 +1,51 @@
 # Claude Code Setup
 
-Installation automatique de Claude Code avec une configuration professionnelle complete.
+Automatic installation of Claude Code with a complete professional configuration.
 
-## Ce qui est installe
+## What gets installed
 
 ### Claude Code CLI
-- Installation native (prioritaire) ou via npm (fallback)
-- Node.js installe automatiquement si necessaire
+- Native installation (preferred) or npm (fallback)
+- Node.js installed automatically if needed
 
-### Configuration globale (`~/.claude/CLAUDE.md`)
-Un framework universel qui s'applique a **tous vos projets** :
+### Global configuration (`~/.claude/CLAUDE.md`)
+A universal framework applied to **all your projects**:
 
-- **Workflow en 7 etapes** : brainstorm, plan, TDD, securite, verification, review, suivi
-- **Reflexion en profondeur** : chaque decision est challengee avec des alternatives
-- **TDD strict** avec tests des edge cases (null, limites, auth, timeout, injection, concurrence)
-- **Checklist securite niveau B** : OWASP top 10, CORS, headers, rate limiting, scan deps
-- **Versions LTS verifiees** en temps reel via recherche web
-- **Documentation toujours a jour** : README, .env.example, CLAUDE.md local, PROGRESS.md
-- **Reprise apres coupure** : PROGRESS.md + hook automatique
-- **Accessibilite web** (WCAG AA)
-- **Performance** : N+1, pagination, index, lazy loading
-- **Conventions git** : Conventional Commits + branches normees
-- **Logging structure** : niveaux, contexte, pas de donnees sensibles
-- **Fichiers d'init** automatiques : README, .env.example, CI/CD, CLAUDE.md local
+- **7-step workflow**: brainstorm, plan, TDD, security, verify, review, progress tracking
+- **Deep reasoning**: every decision is challenged with alternatives
+- **Strict TDD** with edge case testing (null, limits, auth, timeout, injection, concurrency)
+- **Security checklist level B**: OWASP top 10, CORS, headers, rate limiting, dependency scanning
+- **LTS versions verified** in real time via web search
+- **Documentation always up to date**: README, .env.example, local CLAUDE.md, PROGRESS.md
+- **Session resume**: PROGRESS.md + automatic hook
+- **Web accessibility** (WCAG AA)
+- **Performance**: N+1, pagination, indexes, lazy loading
+- **Git conventions**: Conventional Commits + standardized branches
+- **Structured logging**: levels, context, no sensitive data
+- **Auto-init files**: README, .env.example, CI/CD, local CLAUDE.md
 
-### Plugins (17)
+### Plugins
+Loaded from [`config/plugins.txt`](config/plugins.txt) (single source of truth).
+
 | Plugin | Role |
 |--------|------|
-| superpowers | Workflow avance (brainstorm, plans, TDD, debug, review) |
-| frontend-design | Interfaces web production-grade |
-| security-guidance | Guidance securite |
-| context7 | Documentation de librairies a jour |
-| code-simplifier | Simplification de code |
-| playwright | Tests E2E navigateur |
-| typescript-lsp | Support TypeScript |
-| pyright-lsp | Support Python |
-| explanatory-output-style | Explications pedagogiques |
-| learning-output-style | Mode apprentissage interactif |
-| greptile | Recherche semantique dans le code |
-| ralph-loop | Commandes en boucle |
-| claude-md-management | Gestion des CLAUDE.md |
+| superpowers | Advanced workflow (brainstorm, plans, TDD, debug, review) |
+| frontend-design | Production-grade web interfaces |
+| security-guidance | Security guidance |
+| context7 | Up-to-date library documentation |
+| code-simplifier | Code simplification |
+| playwright | Browser E2E testing |
+| typescript-lsp | TypeScript support |
+| pyright-lsp | Python support |
+| explanatory-output-style | Educational explanations |
+| learning-output-style | Interactive learning mode |
+| greptile | Semantic code search |
+| ralph-loop | Looping commands |
+| claude-md-management | CLAUDE.md management |
 
 ## Installation
 
-### Option 1 : Clone + run
+### Option 1: Clone + run (recommended)
 
 ```bash
 git clone https://github.com/yujacare/claude-setup.git
@@ -51,56 +53,74 @@ cd claude-setup
 ./install.sh
 ```
 
-### Option 2 : One-liner
+### Option 2: One-liner
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yujacare/claude-setup/main/install.sh | bash
 ```
 
-> **Note** : L'option 2 telecharge le script mais a besoin du repo pour les fichiers de config. Preferez l'option 1.
+In pipe mode, the script auto-downloads the repository to a temp directory and uses non-interactive defaults (no uninstall, fresh install).
 
-## Desinstallation
+### Existing installation
+
+If Claude Code is already installed, the script will ask:
+
+1. **Uninstall and reinstall?** (default: no)
+   - If yes: selective uninstall (CLI, config, plugins — each optional)
+   - Then fresh install
+2. **Install config and plugins anyway?** (default: yes)
+   - Skips CLI install, applies config and plugins only
+
+## Uninstall
 
 ```bash
 ./uninstall.sh
 ```
 
-Supprime la config et les hooks. Ne desinstalle pas Claude Code ni les plugins.
+The uninstall script will:
+1. Remove CLAUDE.md (with option to restore backup)
+2. Remove session-resume.sh hook
+3. Remove hook from settings.json
+4. **Optionally** remove all plugins installed by the setup
+5. **Optionally** uninstall Claude Code CLI itself
 
-## Personnalisation
+CLI uninstall covers: npm, brew, apt/dpkg, snap, winget (WSL2), and known binary locations.
 
-### Modifier le framework
-Editez `~/.claude/CLAUDE.md` pour adapter les regles a vos besoins.
+## Customization
 
-### Ajouter des plugins
-```bash
-claude plugins install <plugin-name>@<marketplace>
-```
+### Edit the framework
+Edit `~/.claude/CLAUDE.md` to adapt the rules to your needs.
 
-### Desactiver une etape du workflow
-Dites "skip brainstorm", "skip tdd", "skip security", etc. dans votre conversation avec Claude.
+### Add or remove plugins
+Edit [`config/plugins.txt`](config/plugins.txt) — one plugin per line, `#` for comments.
+
+Then re-run `./install.sh` to apply changes.
+
+### Skip a workflow step
+Say "skip brainstorm", "skip tdd", "skip security", etc. in your conversation with Claude.
 
 ## Structure
 
 ```
 claude-setup/
-├── install.sh              # Script d'installation
-├── uninstall.sh            # Script de desinstallation
-├── README.md               # Ce fichier
+├── install.sh                 # Install script (with reinstall + pipe mode support)
+├── uninstall.sh               # Uninstall script (config, plugins, CLI)
+├── README.md
 ├── config/
-│   ├── CLAUDE.md           # Framework universel
-│   ├── settings.json       # Hooks Claude Code
+│   ├── CLAUDE.md              # Universal framework
+│   ├── settings.json          # Claude Code hooks
+│   ├── plugins.txt            # Plugin list (shared by install + uninstall)
 │   └── scripts/
-│       └── session-resume.sh  # Detection PROGRESS.md
+│       └── session-resume.sh  # PROGRESS.md detection + workflow reminder
 ```
 
-## Reprise apres coupure
+## Session resume
 
-Quand vous relancez Claude Code dans un projet :
-1. Le hook detecte automatiquement `PROGRESS.md`
-2. Claude lit l'etat du projet
-3. Dites "reprends" pour continuer exactement ou vous en etiez
+When you relaunch Claude Code in a project:
+1. The hook automatically detects `PROGRESS.md`
+2. Claude reads the project state
+3. Say "resume" to continue exactly where you left off
 
-## Licence
+## License
 
 MIT
