@@ -1,0 +1,17 @@
+superpowers@claude-plugins-official
+superpowers@superpowers-dev
+frontend-design@claude-plugins-official
+frontend-design@claude-code-plugins
+security-guidance@claude-plugins-official
+security-guidance@claude-code-plugins
+context7@claude-plugins-official
+context7-plugin@context7-marketplace
+code-simplifier@claude-plugins-official
+playwright@claude-plugins-official
+typescript-lsp@claude-plugins-official
+pyright-lsp@claude-plugins-official
+explanatory-output-style@claude-plugins-official
+learning-output-style@claude-plugins-official
+greptile@claude-plugins-official
+ralph-loop@claude-plugins-official
+claude-md-management@claude-plugins-official

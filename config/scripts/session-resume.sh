@@ -28,10 +28,10 @@ if [ -f "$PROGRESS_FILE" ]; then
     echo "Chemin: $PROGRESS_FILE"
 fi
 
-# Also check for plan files
+# Check for plan files using find to avoid glob expansion issues on empty dirs
 PLANS_DIR="$PWD/docs/plans"
 if [ -d "$PLANS_DIR" ]; then
-    LATEST_PLAN=$(ls -t "$PLANS_DIR"/*.md 2>/dev/null | head -1)
+    LATEST_PLAN=$(find "$PLANS_DIR" -maxdepth 1 -name "*.md" -type f 2>/dev/null | sort -r | head -1)
     if [ -n "$LATEST_PLAN" ]; then
         echo "Plan disponible: $LATEST_PLAN"
     fi
