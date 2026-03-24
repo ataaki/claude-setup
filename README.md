@@ -9,19 +9,14 @@ Automatic installation of Claude Code with a complete professional configuration
 - Node.js installed automatically if needed
 
 ### Global configuration (`~/.claude/CLAUDE.md`)
-A universal framework applied to **all your projects**:
+A compact universal framework (~60 lines) applied to **all your projects**:
 
-- **7-step workflow**: brainstorm, plan, TDD, security, verify, review, progress tracking
-- **Deep reasoning**: every decision is challenged with alternatives
-- **Strict TDD** with edge case testing (null, limits, auth, timeout, injection, concurrency)
-- **Security checklist level B**: OWASP top 10, CORS, headers, rate limiting, dependency scanning
+- **Adaptive workflow** with 3 tiers: MICRO (typo/config), SMALL (bugfix), STANDARD (feature) — right amount of process for each task size
+- **TDD, security, a11y, performance checklists** in a separate reference doc (`docs/workflow-reference.md`) — consulted when needed, not memorized
 - **LTS versions verified** in real time via web search
 - **Documentation always up to date**: README, .env.example, local CLAUDE.md, PROGRESS.md
 - **Session resume**: PROGRESS.md + automatic hook
-- **Web accessibility** (WCAG AA)
-- **Performance**: N+1, pagination, indexes, lazy loading
 - **Git conventions**: Conventional Commits + standardized branches
-- **Structured logging**: levels, context, no sensitive data
 - **Auto-init files**: README, .env.example, CI/CD, local CLAUDE.md
 
 ### Plugins
@@ -107,11 +102,13 @@ claude-setup/
 ├── uninstall.sh               # Uninstall script (config, plugins, CLI)
 ├── README.md
 ├── config/
-│   ├── CLAUDE.md              # Universal framework
+│   ├── CLAUDE.md              # Universal framework (~60 lines, compact)
 │   ├── settings.json          # Claude Code hooks
 │   ├── plugins.txt            # Plugin list (shared by install + uninstall)
 │   └── scripts/
-│       └── session-resume.sh  # PROGRESS.md detection + workflow reminder
+│       └── session-resume.sh  # Session resume + compact workflow reminder
+├── docs/
+│   └── workflow-reference.md  # Detailed checklists (security, a11y, perf, etc.)
 ```
 
 ## Session resume
