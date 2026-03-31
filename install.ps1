@@ -298,9 +298,8 @@ function Install-ClaudeNative {
 
     # Windows: try winget first (most reliable on Win10/11)
     if (Test-Command winget) {
-        Write-Info "Trying: winget install Anthropic.Claude..."
-        & winget install --id "Anthropic.Claude" --accept-source-agreements --accept-package-agreements 2>&1 |
-            ForEach-Object { Write-Host "  $_" }
+        Write-Info "Trying: winget install Anthropic.Claude (this may take a moment)..."
+        & winget install --id "Anthropic.Claude" --accept-source-agreements --accept-package-agreements --disable-interactivity *>$null
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
         if (-not (Test-Command claude)) { Find-ClaudeBinary | Out-Null }
         if (Test-Command claude) {
