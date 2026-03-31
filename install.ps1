@@ -266,13 +266,39 @@ function Uninstall-Claude {
     if ($doConfig) { Uninstall-ClaudeConfig }
 }
 
+function Ensure-PathEntry {
+    param([string]$Dir)
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if ($userPath -split ";" | Where-Object { $_ -eq $Dir }) {
+        return
+    }
+    Write-Info "Adding $Dir to user PATH..."
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$Dir", "User")
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+}
+
 function Install-ClaudeNative {
+    # Known directories where Claude may be installed
+    $claudePaths = @(
+        (Join-Path $HOME ".local\bin"),
+        (Join-Path $HOME ".claude\bin")
+    )
+
     # Windows: try official installer first
     Write-Info "Trying: official Windows installer..."
     try {
         Invoke-RestMethod -Uri "https://claude.ai/install.ps1" | Invoke-Expression
         # Refresh PATH
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        if (-not (Test-Command claude)) {
+            # Binary may exist but PATH not updated by installer — check known locations
+            foreach ($dir in $claudePaths) {
+                if (Test-Path (Join-Path $dir "claude.exe")) {
+                    Ensure-PathEntry $dir
+                    break
+                }
+            }
+        }
         if (Test-Command claude) {
             Write-Success "Claude Code installed via official installer"
             return $true
@@ -287,6 +313,14 @@ function Install-ClaudeNative {
         & winget install --id "Anthropic.Claude" --accept-source-agreements --accept-package-agreements *>$null
         # Refresh PATH
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        if (-not (Test-Command claude)) {
+            foreach ($dir in $claudePaths) {
+                if (Test-Path (Join-Path $dir "claude.exe")) {
+                    Ensure-PathEntry $dir
+                    break
+                }
+            }
+        }
         if (Test-Command claude) {
             Write-Success "Claude Code installed via winget"
             return $true
