@@ -298,37 +298,7 @@ if (Read-YesNo "Also uninstall Claude Code CLI?") {
         $uninstalled = $true
     }
 
-    # winget
-    if (Test-Command winget) {
-        & winget list --id "Anthropic.Claude" *>$null
-        if ($LASTEXITCODE -eq 0) {
-            & winget uninstall --id "Anthropic.Claude" --silent 2>&1 | Out-Null
-            Write-Success "Claude Code uninstalled (winget)"
-            $uninstalled = $true
-        }
-    }
-
-    # Scoop
-    if (Test-Command scoop) {
-        $scoopList = & scoop list claude-code 2>$null
-        if ($LASTEXITCODE -eq 0) {
-            & scoop uninstall claude-code
-            Write-Success "Claude Code uninstalled (scoop)"
-            $uninstalled = $true
-        }
-    }
-
-    # Chocolatey
-    if (Test-Command choco) {
-        $chocoList = & choco list --local-only claude-code 2>$null
-        if ($chocoList -match "claude-code") {
-            & choco uninstall claude-code -y
-            Write-Success "Claude Code uninstalled (choco)"
-            $uninstalled = $true
-        }
-    }
-
-    # Fallback: remove binary in PATH
+    # Remove binary found in PATH
     $claudeCmd = Get-Command claude -ErrorAction SilentlyContinue
     if ($claudeCmd) {
         $claudeBin = $claudeCmd.Source
@@ -347,12 +317,6 @@ if (Read-YesNo "Also uninstall Claude Code CLI?") {
         (Join-Path $HOME ".claude/bin/claude"),
         (Join-Path $env:LOCALAPPDATA "Programs/claude/claude.exe")
     )
-    # Also search winget package directories for claude binaries
-    $wingetPkgDir = Join-Path $env:LOCALAPPDATA "Microsoft/WinGet/Packages"
-    if (Test-Path $wingetPkgDir) {
-        Get-ChildItem -Path $wingetPkgDir -Filter "claude.exe" -Recurse -ErrorAction SilentlyContinue |
-            ForEach-Object { $knownPaths += $_.FullName }
-    }
     foreach ($p in $knownPaths) {
         if (Test-Path $p) {
             Remove-Item $p -Force
