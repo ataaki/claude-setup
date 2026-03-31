@@ -86,9 +86,17 @@ function Ensure-ConfigDir {
     $script:CleanupTemp = $tempDir
 
     if (Test-Command git) {
-        & git clone --depth 1 https://github.com/ataaki/claude-setup.git $tempDir 2>$null
-        $script:ScriptDir = $tempDir
-    } else {
+        # Git writes progress to stderr; suppress it to avoid NativeCommandError in strict mode
+        $oldPref = $ErrorActionPreference
+        $ErrorActionPreference = 'SilentlyContinue'
+        & git clone --depth 1 https://github.com/ataaki/claude-setup.git $tempDir 2>&1 | Out-Null
+        $ErrorActionPreference = $oldPref
+        if (Test-Path (Join-Path $tempDir "config")) {
+            $script:ScriptDir = $tempDir
+        } else {
+            Write-Fatal "git clone failed. Check your network connection."
+        }
+    } elseif (Test-Command Invoke-WebRequest) {
         New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
         $archive = Join-Path $tempDir "repo.zip"
         Invoke-WebRequest -Uri "https://github.com/ataaki/claude-setup/archive/refs/heads/main.zip" -OutFile $archive -UseBasicParsing
