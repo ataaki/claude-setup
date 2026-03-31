@@ -122,8 +122,8 @@ function Uninstall-ClaudeCli {
     $uninstalled = $false
 
     # npm
-    if ((Test-Command npm) -and (& npm list -g @anthropic-ai/claude-code 2>$null)) {
-        & npm uninstall -g @anthropic-ai/claude-code
+    if ((Test-Command npm.cmd) -and (& npm.cmd list -g @anthropic-ai/claude-code 2>$null)) {
+        & npm.cmd uninstall -g @anthropic-ai/claude-code
         Write-Success "Claude Code uninstalled (npm)"
         $uninstalled = $true
     }
@@ -383,9 +383,9 @@ function Install-Claude {
         Install-Node
     }
 
-    if (Test-Command npm) {
+    if (Test-Command npm.cmd) {
         Write-Info "Installing Claude Code via npm..."
-        & npm install -g @anthropic-ai/claude-code
+        & npm.cmd install -g @anthropic-ai/claude-code
         if (Test-Command claude) {
             Write-Success "Claude Code installed via npm"
             return

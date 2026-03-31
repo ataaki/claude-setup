@@ -292,8 +292,8 @@ if (Read-YesNo "Also uninstall Claude Code CLI?") {
     $uninstalled = $false
 
     # npm
-    if ((Test-Command npm) -and (& npm list -g @anthropic-ai/claude-code 2>$null)) {
-        & npm uninstall -g @anthropic-ai/claude-code
+    if ((Test-Command npm.cmd) -and (& npm.cmd list -g @anthropic-ai/claude-code 2>$null)) {
+        & npm.cmd uninstall -g @anthropic-ai/claude-code
         Write-Success "Claude Code uninstalled (npm)"
         $uninstalled = $true
     }
