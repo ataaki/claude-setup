@@ -12,6 +12,5 @@ typescript-lsp@claude-plugins-official
 pyright-lsp@claude-plugins-official
 explanatory-output-style@claude-plugins-official
 learning-output-style@claude-plugins-official
-greptile@claude-plugins-official
 ralph-loop@claude-plugins-official
 claude-md-management@claude-plugins-official

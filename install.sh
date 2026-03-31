@@ -5,8 +5,8 @@ set -e
 # Claude Code Setup - Automatic installation
 # ============================================================================
 # Installs Claude Code + config + plugins in a single command
-# Usage: curl -fsSL https://raw.githubusercontent.com/yujacare/claude-setup/main/install.sh | bash
-# Or:    git clone https://github.com/yujacare/claude-setup && cd claude-setup && ./install.sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/ataaki/claude-setup/main/install.sh | bash
+# Or:    git clone https://github.com/ataaki/claude-setup && cd claude-setup && ./install.sh
 # ============================================================================
 
 # In pipe mode (curl|bash), BASH_SOURCE is empty — use a non-existent path
@@ -51,10 +51,10 @@ ask_user() {
 
     if ! is_interactive; then
         if [ "$default" = "y" ]; then
-            info "$question → oui (mode non-interactif)"
+            info "$question → yes (non-interactive mode)"
             return 0
         else
-            info "$question → non (mode non-interactif)"
+            info "$question → no (non-interactive mode)"
             return 1
         fi
     fi
@@ -89,15 +89,16 @@ ensure_config_dir() {
     info "Config directory not found locally. Downloading repository..."
     local TEMP_DIR
     TEMP_DIR=$(mktemp -d)
+    CLEANUP_TEMP="$TEMP_DIR"
 
     if command_exists git; then
-        git clone --depth 1 https://github.com/yujacare/claude-setup.git "$TEMP_DIR/claude-setup" 2>/dev/null
+        git clone --depth 1 https://github.com/ataaki/claude-setup.git "$TEMP_DIR/claude-setup" 2>/dev/null
         SCRIPT_DIR="$TEMP_DIR/claude-setup"
     elif command_exists curl; then
-        curl -fsSL https://github.com/yujacare/claude-setup/archive/refs/heads/main.tar.gz | tar -xz -C "$TEMP_DIR"
+        curl -fsSL https://github.com/ataaki/claude-setup/archive/refs/heads/main.tar.gz | tar -xz -C "$TEMP_DIR"
         SCRIPT_DIR="$TEMP_DIR/claude-setup-main"
     else
-        error "Cannot download config files. Use: git clone https://github.com/yujacare/claude-setup && cd claude-setup && ./install.sh"
+        error "Cannot download config files. Use: git clone https://github.com/ataaki/claude-setup && cd claude-setup && ./install.sh"
     fi
 
     if [ ! -d "$SCRIPT_DIR/config" ]; then
@@ -105,7 +106,6 @@ ensure_config_dir() {
     fi
 
     success "Config files downloaded to temp directory"
-    CLEANUP_TEMP="$TEMP_DIR"
 }
 
 # Clean up temp directory on exit
@@ -121,41 +121,34 @@ trap cleanup EXIT
 # ============================================================================
 
 uninstall_claude_cli() {
-    info "Desinstallation du CLI Claude Code..."
+    info "Uninstalling Claude Code CLI..."
     local UNINSTALLED=false
 
     # npm (global package)
     if command_exists npm && npm list -g @anthropic-ai/claude-code &>/dev/null; then
         npm uninstall -g @anthropic-ai/claude-code
-        success "Claude Code desinstalle (npm)"
+        success "Claude Code uninstalled (npm)"
         UNINSTALLED=true
     fi
 
     # Homebrew
     if command_exists brew && brew list claude-code &>/dev/null; then
         brew uninstall claude-code
-        success "Claude Code desinstalle (brew)"
+        success "Claude Code uninstalled (brew)"
         UNINSTALLED=true
     fi
 
     # apt / dpkg (.deb package)
     if command_exists dpkg && dpkg -s claude-code &>/dev/null 2>&1; then
         sudo apt-get remove -y claude-code 2>/dev/null || sudo dpkg -r claude-code 2>/dev/null
-        success "Claude Code desinstalle (apt/dpkg)"
+        success "Claude Code uninstalled (apt/dpkg)"
         UNINSTALLED=true
     fi
 
     # snap
     if command_exists snap && snap list claude-code &>/dev/null 2>&1; then
         sudo snap remove claude-code
-        success "Claude Code desinstalle (snap)"
-        UNINSTALLED=true
-    fi
-
-    # winget (WSL2 can access Windows winget via .exe suffix)
-    if command_exists winget.exe && winget.exe list --id "Anthropic.Claude" &>/dev/null 2>&1; then
-        winget.exe uninstall --id "Anthropic.Claude" --silent 2>/dev/null
-        success "Claude Code desinstalle (winget)"
+        success "Claude Code uninstalled (snap)"
         UNINSTALLED=true
     fi
 
@@ -165,7 +158,7 @@ uninstall_claude_cli() {
         CLAUDE_BIN=$(command -v claude 2>/dev/null)
         if [ -n "$CLAUDE_BIN" ]; then
             rm -f "$CLAUDE_BIN"
-            success "Binaire supprime ($CLAUDE_BIN)"
+            success "Binary removed ($CLAUDE_BIN)"
             UNINSTALLED=true
         fi
     fi
@@ -179,13 +172,13 @@ uninstall_claude_cli() {
     for p in "${KNOWN_PATHS[@]}"; do
         if [ -f "$p" ]; then
             rm -f "$p"
-            success "Binaire supprime ($p)"
+            success "Binary removed ($p)"
             UNINSTALLED=true
         fi
     done
 
     if [ "$UNINSTALLED" = false ]; then
-        warn "Aucune installation de Claude Code trouvee."
+        warn "No Claude Code installation found."
         return 1
     fi
 
@@ -193,23 +186,23 @@ uninstall_claude_cli() {
 }
 
 uninstall_claude_config() {
-    info "Suppression de la config (~/.claude/)..."
+    info "Removing config (~/.claude/)..."
 
     if [ -d "$CLAUDE_DIR" ]; then
         # Backup before deleting
         local BACKUP="$HOME/.claude-backup-$(date +%Y%m%d%H%M%S)"
         cp -r "$CLAUDE_DIR" "$BACKUP"
-        success "Backup cree: $BACKUP"
+        success "Backup created: $BACKUP"
 
         rm -rf "$CLAUDE_DIR"
-        success "Config supprimee (~/.claude/)"
+        success "Config removed (~/.claude/)"
     else
-        skip "Aucune config trouvee (~/.claude/ n'existe pas)"
+        skip "No config found (~/.claude/ does not exist)"
     fi
 }
 
 uninstall_claude_plugins() {
-    info "Suppression des plugins..."
+    info "Removing plugins..."
 
     # Prefer CLI if available (proper uninstall)
     if command_exists claude; then
@@ -219,8 +212,8 @@ uninstall_claude_plugins() {
             echo "$PLUGIN_LIST" | while IFS= read -r plugin; do
                 [ -z "$plugin" ] && continue
                 claude plugins uninstall "$plugin" 2>/dev/null \
-                    && success "  Plugin supprime: $plugin" \
-                    || skip "  Plugin non supprime: $plugin"
+                    && success "  Plugin removed: $plugin" \
+                    || skip "  Plugin not removed: $plugin"
             done
             return 0
         fi
@@ -231,13 +224,13 @@ uninstall_claude_plugins() {
     for dir in "$CLAUDE_DIR/plugins" "$CLAUDE_DIR/installed-plugins"; do
         if [ -d "$dir" ]; then
             rm -rf "$dir"
-            success "Repertoire supprime: $dir"
+            success "Directory removed: $dir"
             FOUND=true
         fi
     done
 
     if [ "$FOUND" = false ]; then
-        skip "Aucun plugin trouve"
+        skip "No plugins found"
     fi
 }
 
@@ -247,10 +240,10 @@ uninstall_claude() {
     local DO_PLUGINS=false
 
     echo ""
-    if ask_user "Supprimer aussi la config (~/.claude/) ?" "n"; then
+    if ask_user "Also remove config (~/.claude/)?" "n"; then
         DO_CONFIG=true
     else
-        if ask_user "Supprimer les plugins ?" "n"; then
+        if ask_user "Remove plugins?" "n"; then
             DO_PLUGINS=true
         fi
     fi
@@ -274,31 +267,31 @@ install_claude() {
     echo "  Step 1: Claude Code CLI"
     echo "============================================"
 
-    info "Installation de Claude Code..."
+    info "Installing Claude Code..."
 
     # Attempt 1: Native installer (no Node.js needed)
     if install_claude_native; then
         return 0
     fi
 
-    warn "Installation native echouee. Fallback vers npm..."
+    warn "Native installation failed. Falling back to npm..."
 
     # Attempt 2: Via npm (needs Node.js)
     if ! command_exists node; then
-        info "Node.js non trouve. Installation de Node.js..."
+        info "Node.js not found. Installing Node.js..."
         install_node
     fi
 
     if command_exists npm; then
-        info "Installation de Claude Code via npm..."
+        info "Installing Claude Code via npm..."
         npm install -g @anthropic-ai/claude-code
         if command_exists claude; then
-            success "Claude Code installe via npm"
+            success "Claude Code installed via npm"
             return 0
         fi
     fi
 
-    error "Impossible d'installer Claude Code. Installez-le manuellement: https://docs.anthropic.com/en/docs/claude-code/getting-started"
+    error "Cannot install Claude Code. Install manually: https://docs.anthropic.com/en/docs/claude-code/getting-started"
 }
 
 install_claude_native() {
@@ -307,33 +300,33 @@ install_claude_native() {
 
     case "$OS" in
         Darwin)
-            # macOS: try brew first
-            if command_exists brew; then
-                info "Tentative: brew install --cask claude-code..."
-                if brew install --cask claude-code 2>/dev/null; then
-                    if command_exists claude; then
-                        success "Claude Code installe via Homebrew"
-                        return 0
-                    fi
-                fi
-            fi
-            # macOS: try the official installer script
-            info "Tentative: installeur officiel macOS..."
+            # macOS: try the official installer script first
+            info "Trying: official macOS installer..."
             if curl -fsSL https://claude.ai/install.sh | sh 2>/dev/null; then
                 export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
                 if command_exists claude; then
-                    success "Claude Code installe via installeur officiel"
+                    success "Claude Code installed via official installer"
                     return 0
+                fi
+            fi
+            # macOS: fallback to brew
+            if command_exists brew; then
+                info "Trying: brew install --cask claude-code..."
+                if brew install --cask claude-code 2>/dev/null; then
+                    if command_exists claude; then
+                        success "Claude Code installed via Homebrew"
+                        return 0
+                    fi
                 fi
             fi
             ;;
         Linux)
             # Linux: try the official installer script
-            info "Tentative: installeur officiel Linux..."
+            info "Trying: official Linux installer..."
             if curl -fsSL https://claude.ai/install.sh | sh 2>/dev/null; then
                 export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
                 if command_exists claude; then
-                    success "Claude Code installe via installeur officiel"
+                    success "Claude Code installed via official installer"
                     return 0
                 fi
             fi
@@ -346,34 +339,34 @@ install_claude_native() {
 install_node() {
     # Attempt 1: Already installed
     if command_exists node; then
-        success "Node.js deja installe ($(node --version))"
+        success "Node.js already installed ($(node --version))"
         return 0
     fi
 
     # Attempt 2: Homebrew (macOS/Linux)
     if command_exists brew; then
-        info "Installation de Node.js via Homebrew..."
+        info "Installing Node.js via Homebrew..."
         brew install node
         if command_exists node; then
-            success "Node.js installe via Homebrew ($(node --version))"
+            success "Node.js installed via Homebrew ($(node --version))"
             return 0
         fi
     fi
 
     # Attempt 3: nvm
-    info "Installation de Node.js via nvm..."
+    info "Installing Node.js via nvm..."
     if curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash 2>/dev/null; then
         export NVM_DIR="$HOME/.nvm"
         # shellcheck source=/dev/null
         [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
         nvm install --lts
         if command_exists node; then
-            success "Node.js installe via nvm ($(node --version))"
+            success "Node.js installed via nvm ($(node --version))"
             return 0
         fi
     fi
 
-    error "Impossible d'installer Node.js. Installez-le manuellement: https://nodejs.org/"
+    error "Cannot install Node.js. Install manually: https://nodejs.org/"
 }
 
 # ============================================================================
@@ -392,23 +385,23 @@ setup_config() {
 
     # --- CLAUDE.md ---
     if [ -f "$CLAUDE_DIR/CLAUDE.md" ]; then
-        if ask_user "~/.claude/CLAUDE.md existe deja. Remplacer ?" "n"; then
+        if ask_user "~/.claude/CLAUDE.md already exists. Replace?" "n"; then
             # Backup before overwriting
             cp "$CLAUDE_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md.backup.$(date +%Y%m%d%H%M%S)"
             cp "$SCRIPT_DIR/config/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-            success "CLAUDE.md remplace (backup cree)"
+            success "CLAUDE.md replaced (backup created)"
         else
-            skip "CLAUDE.md conserve"
+            skip "CLAUDE.md kept"
         fi
     else
         cp "$SCRIPT_DIR/config/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-        success "CLAUDE.md installe"
+        success "CLAUDE.md installed"
     fi
 
     # --- session-resume.sh ---
     cp "$SCRIPT_DIR/config/scripts/session-resume.sh" "$CLAUDE_SCRIPTS_DIR/session-resume.sh"
     chmod +x "$CLAUDE_SCRIPTS_DIR/session-resume.sh"
-    success "session-resume.sh installe"
+    success "session-resume.sh installed"
 
     # --- settings.json (merge) ---
     merge_settings
@@ -419,19 +412,19 @@ merge_settings() {
     local NEW="$SCRIPT_DIR/config/settings.json"
 
     if ! command_exists jq; then
-        info "Installation de jq pour merger les settings..."
+        info "Installing jq to merge settings..."
         if command_exists brew; then
             brew install jq
         elif command_exists apt-get; then
             sudo apt-get install -y jq
         else
-            warn "jq non disponible. Copie directe des settings (backup cree)."
+            warn "jq not available. Direct copy of settings (backup created)."
             if [ -f "$EXISTING" ]; then
                 cp "$EXISTING" "$EXISTING.backup.$(date +%Y%m%d%H%M%S)"
                 warn "Backup: $EXISTING.backup.*"
             fi
             cp "$NEW" "$EXISTING"
-            success "settings.json installe (copie directe)"
+            success "settings.json installed (direct copy)"
             return 0
         fi
     fi
@@ -445,12 +438,12 @@ merge_settings() {
         HAS_RESUME=$(jq '.hooks.UserPromptSubmit[0].hooks // [] | map(select(.command | contains("session-resume"))) | length' "$EXISTING" 2>/dev/null || echo "0")
 
         if [ "$HAS_RESUME" -gt 0 ]; then
-            skip "Hook session-resume deja present dans settings.json"
+            skip "session-resume hook already present in settings.json"
         else
             # Add the session-resume hook to UserPromptSubmit
             local RESUME_HOOK='{"type":"command","command":"$HOME/.claude/scripts/session-resume.sh"}'
 
-            if jq '.hooks.UserPromptSubmit' "$EXISTING" 2>/dev/null | grep -q "null"; then
+            if ! jq -e '.hooks.UserPromptSubmit' "$EXISTING" &>/dev/null; then
                 # No UserPromptSubmit exists, create it
                 jq --argjson hook "$RESUME_HOOK" \
                     '.hooks.UserPromptSubmit = [{"hooks": [$hook]}]' \
@@ -461,11 +454,11 @@ merge_settings() {
                     '.hooks.UserPromptSubmit[0].hooks += [$hook]' \
                     "$EXISTING" > "$EXISTING.tmp" && mv "$EXISTING.tmp" "$EXISTING"
             fi
-            success "Hook session-resume ajoute a settings.json"
+            success "session-resume hook added to settings.json"
         fi
     else
         cp "$NEW" "$EXISTING"
-        success "settings.json cree"
+        success "settings.json created"
     fi
 }
 
@@ -491,7 +484,7 @@ install_plugins() {
         local MP_NAME
         MP_NAME=$(echo "$mp" | cut -d'/' -f2)
         info "Marketplace: $mp"
-        claude plugins marketplace add "https://github.com/$mp" 2>/dev/null && success "  $MP_NAME ajoute" || skip "  $MP_NAME deja present"
+        claude plugins marketplace add "https://github.com/$mp" 2>/dev/null && success "  $MP_NAME added" || skip "  $MP_NAME already present"
     done
 
     # --- Plugins (loaded from shared config/plugins.txt) ---
@@ -504,11 +497,15 @@ install_plugins() {
     while IFS= read -r line || [ -n "$line" ]; do
         [ -z "$line" ] && continue
         [[ "$line" =~ ^# ]] && continue
+        # Strip inline comments and trailing whitespace
+        line="${line%%#*}"
+        line="${line%"${line##*[![:space:]]}"}"
+        [ -z "$line" ] && continue
         PLUGINS+=("$line")
     done < "$PLUGINS_FILE"
 
     echo ""
-    info "Installation de ${#PLUGINS[@]} plugins..."
+    info "Installing ${#PLUGINS[@]} plugins..."
     echo ""
 
     local INSTALLED=0
@@ -519,13 +516,13 @@ install_plugins() {
             success "  $plugin"
             INSTALLED=$((INSTALLED + 1))
         else
-            skip "  $plugin (deja installe ou indisponible)"
+            skip "  $plugin (already installed or unavailable)"
             SKIPPED=$((SKIPPED + 1))
         fi
     done
 
     echo ""
-    success "Plugins: $INSTALLED installes, $SKIPPED deja presents"
+    success "Plugins: $INSTALLED installed, $SKIPPED already present"
 }
 
 # ============================================================================
@@ -535,23 +532,23 @@ install_plugins() {
 summary() {
     echo ""
     echo "============================================"
-    echo -e "  ${GREEN}Installation terminee !${NC}"
+    echo -e "  ${GREEN}Installation complete!${NC}"
     echo "============================================"
     echo ""
-    echo "  Ce qui a ete installe :"
+    echo "  What was installed:"
     echo "  - Claude Code CLI"
-    echo "  - CLAUDE.md global (workflow, securite, TDD, etc.)"
-    echo "  - Hook session-resume (reprise apres coupure)"
+    echo "  - Global CLAUDE.md (workflow, security, TDD, etc.)"
+    echo "  - session-resume hook (resume after interruption)"
     echo "  - Plugins (superpowers, frontend-design, security, etc.)"
     echo ""
-    echo "  Pour commencer :"
+    echo "  To start:"
     echo "    claude"
     echo ""
-    echo "  Pour verifier l'installation :"
+    echo "  To verify the installation:"
     echo "    claude --version"
     echo "    claude plugins list"
     echo ""
-    echo "  Documentation du framework :"
+    echo "  Framework documentation:"
     echo "    cat ~/.claude/CLAUDE.md"
     echo ""
 }
@@ -564,7 +561,7 @@ main() {
     echo ""
     echo "============================================"
     echo "  Claude Code Setup"
-    echo "  github.com/yujacare/claude-setup"
+    echo "  github.com/ataaki/claude-setup"
     echo "============================================"
 
     # Ensure config files are available (handles curl|bash mode)
@@ -572,15 +569,15 @@ main() {
 
     if command_exists claude; then
         CLAUDE_VERSION=$(claude --version 2>/dev/null || echo "unknown")
-        warn "Claude Code est deja installe ($CLAUDE_VERSION)"
+        warn "Claude Code is already installed ($CLAUDE_VERSION)"
         echo ""
-        if ask_user "Desinstaller et reinstaller Claude Code ?" "n"; then
+        if ask_user "Uninstall and reinstall Claude Code?" "n"; then
             uninstall_claude
             install_claude
         else
-            skip "Reinstallation de Claude Code ignoree"
-            if ! ask_user "Installer quand meme la config et les plugins ?" "y"; then
-                info "Installation annulee."
+            skip "Claude Code reinstall skipped"
+            if ! ask_user "Install config and plugins anyway?" "y"; then
+                info "Installation cancelled."
                 exit 0
             fi
         fi

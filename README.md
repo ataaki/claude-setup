@@ -34,27 +34,46 @@ Loaded from [`config/plugins.txt`](config/plugins.txt) (single source of truth).
 | pyright-lsp | Python support |
 | explanatory-output-style | Educational explanations |
 | learning-output-style | Interactive learning mode |
-| greptile | Semantic code search |
 | ralph-loop | Looping commands |
 | claude-md-management | CLAUDE.md management |
 
 ## Installation
 
-### Option 1: Clone + run (recommended)
+### Linux / macOS (Bash)
+
+#### Option 1: Clone + run (recommended)
 
 ```bash
-git clone https://github.com/yujacare/claude-setup.git
+git clone https://github.com/ataaki/claude-setup.git
 cd claude-setup
 ./install.sh
 ```
 
-### Option 2: One-liner
+#### Option 2: One-liner
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yujacare/claude-setup/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ataaki/claude-setup/main/install.sh | bash
 ```
 
 In pipe mode, the script auto-downloads the repository to a temp directory and uses non-interactive defaults (no uninstall, fresh install).
+
+### Windows (PowerShell)
+
+#### Option 1: Clone + run (recommended)
+
+```powershell
+git clone https://github.com/ataaki/claude-setup.git
+cd claude-setup
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+#### Option 2: One-liner
+
+```powershell
+irm https://raw.githubusercontent.com/ataaki/claude-setup/main/install.ps1 | iex
+```
+
+In pipe mode, the script auto-downloads the repository to a temp directory and uses non-interactive defaults.
 
 ### Existing installation
 
@@ -68,18 +87,29 @@ If Claude Code is already installed, the script will ask:
 
 ## Uninstall
 
+### Linux / macOS
+
 ```bash
 ./uninstall.sh
 ```
 
-The uninstall script will:
+CLI uninstall covers: npm, brew, apt/dpkg, snap, and known binary locations.
+
+### Windows
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
+```
+
+CLI uninstall covers: npm, winget, scoop, chocolatey, and known binary locations.
+
+### What the uninstall does
+
 1. Remove CLAUDE.md (with option to restore backup)
-2. Remove session-resume.sh hook
+2. Remove session-resume hook scripts
 3. Remove hook from settings.json
 4. **Optionally** remove all plugins installed by the setup
 5. **Optionally** uninstall Claude Code CLI itself
-
-CLI uninstall covers: npm, brew, apt/dpkg, snap, winget (WSL2), and known binary locations.
 
 ## Customization
 
@@ -89,7 +119,7 @@ Edit `~/.claude/CLAUDE.md` to adapt the rules to your needs.
 ### Add or remove plugins
 Edit [`config/plugins.txt`](config/plugins.txt) — one plugin per line, `#` for comments.
 
-Then re-run `./install.sh` to apply changes.
+Then re-run `./install.sh` (or `.\install.ps1` on Windows) to apply changes.
 
 ### Skip a workflow step
 Say "skip brainstorm", "skip tdd", "skip security", etc. in your conversation with Claude.
@@ -98,15 +128,18 @@ Say "skip brainstorm", "skip tdd", "skip security", etc. in your conversation wi
 
 ```
 claude-setup/
-├── install.sh                 # Install script (with reinstall + pipe mode support)
-├── uninstall.sh               # Uninstall script (config, plugins, CLI)
+├── install.sh                 # Install script - Bash (Linux/macOS)
+├── install.ps1                # Install script - PowerShell (Windows)
+├── uninstall.sh               # Uninstall script - Bash (Linux/macOS)
+├── uninstall.ps1              # Uninstall script - PowerShell (Windows)
 ├── README.md
 ├── config/
 │   ├── CLAUDE.md              # Universal framework (~60 lines, compact)
 │   ├── settings.json          # Claude Code hooks
 │   ├── plugins.txt            # Plugin list (shared by install + uninstall)
 │   └── scripts/
-│       └── session-resume.sh  # Session resume + compact workflow reminder
+│       ├── session-resume.sh  # Session resume hook (Bash)
+│       └── session-resume.ps1 # Session resume hook (PowerShell)
 ├── docs/
 │   └── workflow-reference.md  # Detailed checklists (security, a11y, perf, etc.)
 ```
