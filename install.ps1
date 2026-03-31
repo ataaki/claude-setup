@@ -596,6 +596,9 @@ try {
     # Ensure config files are available (handles irm|iex mode)
     Ensure-ConfigDir
 
+    # Refresh PATH so we can detect Claude even if it was installed in a previous session
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+
     if (Test-Command claude) {
         $claudeVersion = try { & claude --version 2>$null } catch { "unknown" }
         Write-Warn "Claude Code is already installed ($claudeVersion)"

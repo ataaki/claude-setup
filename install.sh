@@ -567,6 +567,9 @@ main() {
     # Ensure config files are available (handles curl|bash mode)
     ensure_config_dir
 
+    # Ensure common Claude install paths are in PATH for detection
+    export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
+
     if command_exists claude; then
         CLAUDE_VERSION=$(claude --version 2>/dev/null || echo "unknown")
         warn "Claude Code is already installed ($CLAUDE_VERSION)"
