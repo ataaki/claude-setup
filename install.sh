@@ -302,7 +302,7 @@ install_claude_native() {
         Darwin)
             # macOS: try the official installer script first
             info "Trying: official macOS installer..."
-            if curl -fsSL https://claude.ai/install.sh | sh 2>/dev/null; then
+            if curl -fsSL https://claude.ai/install.sh | sh; then
                 export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
                 if command_exists claude; then
                     success "Claude Code installed via official installer"
@@ -323,7 +323,7 @@ install_claude_native() {
         Linux)
             # Linux: try the official installer script
             info "Trying: official Linux installer..."
-            if curl -fsSL https://claude.ai/install.sh | sh 2>/dev/null; then
+            if curl -fsSL https://claude.ai/install.sh | sh; then
                 export PATH="$HOME/.local/bin:$HOME/.claude/bin:$PATH"
                 if command_exists claude; then
                     success "Claude Code installed via official installer"
