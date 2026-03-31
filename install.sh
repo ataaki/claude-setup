@@ -86,7 +86,7 @@ ensure_config_dir() {
         return 0
     fi
 
-    info "Config directory not found locally. Downloading repository..."
+    info "Pipe mode detected. Downloading claude-setup repository for config files..."
     local TEMP_DIR
     TEMP_DIR=$(mktemp -d)
     CLEANUP_TEMP="$TEMP_DIR"

@@ -73,7 +73,7 @@ function Ensure-ConfigDir {
         return
     }
 
-    Write-Info "Config directory not found locally. Downloading repository..."
+    Write-Info "Pipe mode detected. Downloading claude-setup repository for config files..."
     $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "claude-setup-$(Get-Random)"
     $script:CleanupTemp = $tempDir
 
