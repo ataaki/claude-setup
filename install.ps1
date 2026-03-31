@@ -281,50 +281,48 @@ function Install-ClaudeNative {
     # Known directories where Claude may be installed
     $claudePaths = @(
         (Join-Path $HOME ".local\bin"),
-        (Join-Path $HOME ".claude\bin")
+        (Join-Path $HOME ".claude\bin"),
+        (Join-Path $env:LOCALAPPDATA "Programs\claude")
     )
 
-    # Windows: try official installer first
-    Write-Info "Trying: official Windows installer..."
-    try {
-        Invoke-RestMethod -Uri "https://claude.ai/install.ps1" | Invoke-Expression
-        # Refresh PATH
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-        if (-not (Test-Command claude)) {
-            # Binary may exist but PATH not updated by installer — check known locations
-            foreach ($dir in $claudePaths) {
-                if (Test-Path (Join-Path $dir "claude.exe")) {
-                    Ensure-PathEntry $dir
-                    break
-                }
+    # Helper: check known paths and add to PATH if binary found
+    function Find-ClaudeBinary {
+        foreach ($dir in $claudePaths) {
+            if (Test-Path (Join-Path $dir "claude.exe")) {
+                Ensure-PathEntry $dir
+                return $true
             }
         }
-        if (Test-Command claude) {
-            Write-Success "Claude Code installed via official installer"
-            return $true
-        }
-    } catch {
-        # Installer not available or failed
+        return $false
     }
 
-    # Fallback to winget
+    # Windows: try winget first (most reliable on Win10/11)
     if (Test-Command winget) {
         Write-Info "Trying: winget install Anthropic.Claude..."
-        & winget install --id "Anthropic.Claude" --accept-source-agreements --accept-package-agreements *>$null
-        # Refresh PATH
+        & winget install --id "Anthropic.Claude" --accept-source-agreements --accept-package-agreements 2>&1 |
+            ForEach-Object { Write-Host "  $_" }
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-        if (-not (Test-Command claude)) {
-            foreach ($dir in $claudePaths) {
-                if (Test-Path (Join-Path $dir "claude.exe")) {
-                    Ensure-PathEntry $dir
-                    break
-                }
-            }
-        }
+        if (-not (Test-Command claude)) { Find-ClaudeBinary | Out-Null }
         if (Test-Command claude) {
             Write-Success "Claude Code installed via winget"
             return $true
         }
+        Write-Warn "winget install did not succeed"
+    }
+
+    # Fallback: official installer script
+    Write-Info "Trying: official Windows installer..."
+    try {
+        Invoke-RestMethod -Uri "https://claude.ai/install.ps1" | Invoke-Expression
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        if (-not (Test-Command claude)) { Find-ClaudeBinary | Out-Null }
+        if (Test-Command claude) {
+            Write-Success "Claude Code installed via official installer"
+            return $true
+        }
+        Write-Warn "Official installer did not succeed"
+    } catch {
+        Write-Warn "Official installer failed: $_"
     }
 
     return $false
