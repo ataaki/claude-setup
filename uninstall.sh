@@ -8,9 +8,15 @@ set -e
 # Can optionally uninstall Claude Code CLI, plugins, and config
 # ============================================================================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# In pipe mode (curl|bash), BASH_SOURCE is empty — use a non-existent path
+# so ensure_config_dir detects the missing config/ and triggers a download
+if [ -n "${BASH_SOURCE[0]:-}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    SCRIPT_DIR="/nonexistent"
+fi
 CLAUDE_DIR="$HOME/.claude"
-PLUGINS_FILE="$SCRIPT_DIR/config/plugins.txt"
+CLEANUP_TEMP=""
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -25,6 +31,79 @@ skip()    { echo -e "${YELLOW}[SKIP]${NC} $1"; }
 
 command_exists() { command -v "$1" &>/dev/null; }
 
+# Detect if stdin is a terminal (interactive mode)
+is_interactive() { [ -t 0 ]; }
+
+# Ask user a yes/no question. In non-interactive mode, returns the default.
+ask_user() {
+    local question="$1"
+    local default="$2"  # "y" or "n"
+
+    if ! is_interactive; then
+        if [ "$default" = "y" ]; then
+            info "$question → yes (non-interactive mode)"
+            return 0
+        else
+            info "$question → no (non-interactive mode)"
+            return 1
+        fi
+    fi
+
+    if [ "$default" = "y" ]; then
+        echo -n "  $question (Y/n): "
+    else
+        echo -n "  $question (y/N): "
+    fi
+
+    read -r REPLY || REPLY=""
+
+    if [ "$default" = "y" ]; then
+        [[ "$REPLY" =~ ^[Nn]$ ]] && return 1
+        return 0
+    else
+        [[ "$REPLY" =~ ^[Yy]$ ]] && return 0
+        return 1
+    fi
+}
+
+# Ensure config files are available (handles curl|bash mode)
+ensure_config_dir() {
+    if [ -d "$SCRIPT_DIR/config" ]; then
+        return 0
+    fi
+
+    info "Config directory not found locally. Downloading repository..."
+    local TEMP_DIR
+    TEMP_DIR=$(mktemp -d)
+    CLEANUP_TEMP="$TEMP_DIR"
+
+    if command_exists git; then
+        git clone --depth 1 https://github.com/ataaki/claude-setup.git "$TEMP_DIR/claude-setup" 2>/dev/null
+        SCRIPT_DIR="$TEMP_DIR/claude-setup"
+    elif command_exists curl; then
+        curl -fsSL https://github.com/ataaki/claude-setup/archive/refs/heads/main.tar.gz | tar -xz -C "$TEMP_DIR"
+        SCRIPT_DIR="$TEMP_DIR/claude-setup-main"
+    else
+        warn "Cannot download config files. Plugin removal will be skipped."
+        return 1
+    fi
+
+    if [ ! -d "$SCRIPT_DIR/config" ]; then
+        warn "Failed to download config files. Plugin removal will be skipped."
+        return 1
+    fi
+
+    success "Config files downloaded to temp directory"
+}
+
+# Cleanup temp directory on exit
+cleanup() {
+    if [ -n "$CLEANUP_TEMP" ] && [ -d "$CLEANUP_TEMP" ]; then
+        rm -rf "$CLEANUP_TEMP"
+    fi
+}
+trap cleanup EXIT
+
 echo ""
 echo "============================================"
 echo "  Claude Code Setup - Uninstall"
@@ -35,9 +114,7 @@ echo "  - Config installed by the setup (CLAUDE.md, session-resume.sh, hook)"
 echo "  - Plugins installed by the setup"
 echo "  - Claude Code CLI itself"
 echo ""
-echo -n "Continue? (y/N): "
-read -r REPLY
-if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
+if ! ask_user "Continue?" "n"; then
     echo "Cancelled."
     exit 0
 fi
@@ -56,12 +133,10 @@ if [ -f "$CLAUDE_DIR/CLAUDE.md" ]; then
     # Check for backups (created by install.sh before overwriting)
     LATEST_BACKUP=$(find "$CLAUDE_DIR" -maxdepth 1 -name "CLAUDE.md.backup.*" -type f 2>/dev/null | sort -r | head -1)
     if [ -n "$LATEST_BACKUP" ]; then
-        echo -n "  Restore backup ($LATEST_BACKUP)? (y/N): "
-        read -r REPLY
-        if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+        if ask_user "Restore backup ($LATEST_BACKUP)?" "n"; then
             cp "$LATEST_BACKUP" "$CLAUDE_DIR/CLAUDE.md"
             success "Backup restored"
-        fi
+        fi  # end ask_user restore
     fi
 else
     skip "CLAUDE.md not found"
@@ -118,12 +193,14 @@ fi
 # ============================================================================
 
 echo ""
-echo -n "  Also remove plugins installed by the setup? (y/N): "
-read -r REPLY
-if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+if ask_user "Also remove plugins installed by the setup?" "n"; then
     info "Removing plugins..."
 
     if command_exists claude; then
+        # Ensure config dir is available (downloads repo in pipe mode)
+        ensure_config_dir
+        PLUGINS_FILE="$SCRIPT_DIR/config/plugins.txt"
+
         # Load plugin list from shared config file
         PLUGINS=()
         if [ -f "$PLUGINS_FILE" ]; then
@@ -177,9 +254,7 @@ fi
 # ============================================================================
 
 echo ""
-echo -n "  Also uninstall Claude Code CLI? (y/N): "
-read -r REPLY
-if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+if ask_user "Also uninstall Claude Code CLI?" "n"; then
     info "Uninstalling CLI..."
     UNINSTALLED=false
 

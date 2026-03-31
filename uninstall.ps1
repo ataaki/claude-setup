@@ -8,9 +8,15 @@
 
 $ErrorActionPreference = 'Stop'
 
-$ScriptDir = $PSScriptRoot
+# Detect pipe mode (irm|iex) — $PSScriptRoot is empty when piped
+if ($PSScriptRoot) {
+    $ScriptDir = $PSScriptRoot
+} else {
+    $ScriptDir = $null
+}
+
 $ClaudeDir = Join-Path $HOME ".claude"
-$PluginsFile = Join-Path $ScriptDir "config/plugins.txt"
+$CleanupTemp = $null
 
 # ============================================================================
 # Helpers
@@ -24,6 +30,81 @@ function Write-Skip    { param([string]$Msg) Write-Host "[SKIP] " -ForegroundCol
 function Test-Command {
     param([string]$Name)
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
+}
+
+function Test-Interactive {
+    return [Environment]::UserInteractive -and ($null -ne $ScriptDir)
+}
+
+function Read-YesNo {
+    param(
+        [string]$Question,
+        [string]$Default = "n"
+    )
+
+    if (-not (Test-Interactive)) {
+        if ($Default -eq "y") {
+            Write-Info "$Question -> yes (non-interactive mode)"
+            return $true
+        } else {
+            Write-Info "$Question -> no (non-interactive mode)"
+            return $false
+        }
+    }
+
+    if ($Default -eq "y") {
+        $prompt = "  $Question (Y/n): "
+    } else {
+        $prompt = "  $Question (y/N): "
+    }
+
+    Write-Host $prompt -NoNewline
+    $reply = Read-Host
+
+    if ($Default -eq "y") {
+        return $reply -notmatch '^[Nn]$'
+    } else {
+        return $reply -match '^[Yy]$'
+    }
+}
+
+function Ensure-ConfigDir {
+    if ($ScriptDir -and (Test-Path (Join-Path $ScriptDir "config"))) {
+        return
+    }
+
+    Write-Info "Config directory not found locally. Downloading repository..."
+    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "claude-setup-$(Get-Random)"
+    $script:CleanupTemp = $tempDir
+
+    if (Test-Command git) {
+        $oldPref = $ErrorActionPreference
+        $ErrorActionPreference = 'SilentlyContinue'
+        & git clone --depth 1 https://github.com/ataaki/claude-setup.git $tempDir 2>&1 | Out-Null
+        $ErrorActionPreference = $oldPref
+        if (Test-Path (Join-Path $tempDir "config")) {
+            $script:ScriptDir = $tempDir
+        } else {
+            Write-Warn "git clone failed. Plugin removal will be skipped."
+            return
+        }
+    } elseif (Test-Command Invoke-WebRequest) {
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        $archive = Join-Path $tempDir "repo.zip"
+        Invoke-WebRequest -Uri "https://github.com/ataaki/claude-setup/archive/refs/heads/main.zip" -OutFile $archive -UseBasicParsing
+        Expand-Archive -Path $archive -DestinationPath $tempDir -Force
+        $script:ScriptDir = Join-Path $tempDir "claude-setup-main"
+    } else {
+        Write-Warn "Cannot download config files. Plugin removal will be skipped."
+        return
+    }
+
+    if (-not (Test-Path (Join-Path $script:ScriptDir "config"))) {
+        Write-Warn "Failed to download config files. Plugin removal will be skipped."
+        return
+    }
+
+    Write-Success "Config files downloaded to temp directory"
 }
 
 # ============================================================================
@@ -40,9 +121,7 @@ Write-Host "  - Config installed by the setup (CLAUDE.md, session-resume, hook)"
 Write-Host "  - Plugins installed by the setup"
 Write-Host "  - Claude Code CLI itself"
 Write-Host ""
-Write-Host "Continue? (y/N): " -NoNewline
-$reply = Read-Host
-if ($reply -notmatch '^[Yy]$') {
+if (-not (Read-YesNo "Continue?")) {
     Write-Host "Cancelled."
     return
 }
@@ -66,9 +145,7 @@ if (Test-Path $claudeMd) {
     $latestBackup = $backups | Select-Object -First 1
 
     if ($latestBackup) {
-        Write-Host "  Restore backup ($($latestBackup.FullName))? (y/N): " -NoNewline
-        $reply = Read-Host
-        if ($reply -match '^[Yy]$') {
+        if (Read-YesNo "Restore backup ($($latestBackup.FullName))?") {
             Copy-Item $latestBackup.FullName $claudeMd
             Write-Success "Backup restored"
         }
@@ -142,12 +219,14 @@ if (Test-Path $settingsFile) {
 # ============================================================================
 
 Write-Host ""
-Write-Host "  Also remove plugins installed by the setup? (y/N): " -NoNewline
-$reply = Read-Host
-if ($reply -match '^[Yy]$') {
+if (Read-YesNo "Also remove plugins installed by the setup?") {
     Write-Info "Removing plugins..."
 
     if (Test-Command claude) {
+        # Ensure config dir is available (downloads repo in pipe mode)
+        Ensure-ConfigDir
+        $PluginsFile = Join-Path $ScriptDir "config/plugins.txt"
+
         $plugins = @()
         if (Test-Path $PluginsFile) {
             $plugins = @(Get-Content $PluginsFile | ForEach-Object {
@@ -208,9 +287,7 @@ if ($reply -match '^[Yy]$') {
 # ============================================================================
 
 Write-Host ""
-Write-Host "  Also uninstall Claude Code CLI? (y/N): " -NoNewline
-$reply = Read-Host
-if ($reply -match '^[Yy]$') {
+if (Read-YesNo "Also uninstall Claude Code CLI?") {
     Write-Info "Uninstalling CLI..."
     $uninstalled = $false
 
@@ -289,6 +366,11 @@ if ($reply -match '^[Yy]$') {
     }
 } else {
     Write-Skip "Claude Code CLI kept"
+}
+
+# Cleanup temp directory
+if ($CleanupTemp -and (Test-Path $CleanupTemp)) {
+    Remove-Item $CleanupTemp -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""
