@@ -628,8 +628,20 @@ try {
     # Ensure config files are available (handles irm|iex mode)
     Ensure-ConfigDir
 
-    # Refresh PATH so we can detect Claude even if it was installed in a previous session
+    # Refresh PATH and check known install locations so we detect existing installs
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    if (-not (Test-Command claude)) {
+        foreach ($dir in @(
+            (Join-Path $HOME ".local\bin"),
+            (Join-Path $HOME ".claude\bin"),
+            (Join-Path $env:LOCALAPPDATA "Programs\claude")
+        )) {
+            if (Test-Path (Join-Path $dir "claude.exe")) {
+                Ensure-PathEntry $dir
+                break
+            }
+        }
+    }
 
     if (Test-Command claude) {
         $claudeVersion = try { & claude --version 2>$null } catch { "unknown" }
