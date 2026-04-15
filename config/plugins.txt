@@ -14,3 +14,4 @@ explanatory-output-style@claude-plugins-official
 learning-output-style@claude-plugins-official
 ralph-loop@claude-plugins-official
 claude-md-management@claude-plugins-official
+claude-mem@claude-mem

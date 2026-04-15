@@ -1,0 +1,5 @@
+anthropics/claude-plugins-official
+obra/superpowers
+upstash/context7
+anthropics/claude-code
+thedotmack/claude-mem

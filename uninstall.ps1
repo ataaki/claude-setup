@@ -254,12 +254,18 @@ if (Read-YesNo "Also remove plugins installed by the setup?") {
 
         # Remove marketplaces added by install
         Write-Info "Removing marketplaces..."
-        $marketplaces = @(
-            "anthropics/claude-plugins-official",
-            "obra/superpowers",
-            "upstash/context7",
-            "anthropics/claude-code"
-        )
+        $marketplacesFile = Join-Path $ScriptDir "config/marketplaces.txt"
+        $marketplaces = @()
+        if (Test-Path $marketplacesFile) {
+            $marketplaces = @(Get-Content $marketplacesFile | ForEach-Object {
+                $line = $_.Trim()
+                if ($line -and -not $line.StartsWith("#")) {
+                    ($line -split '#')[0].Trim()
+                }
+            } | Where-Object { $_ })
+        } else {
+            Write-Warn "marketplaces.txt not found ($marketplacesFile). Skipping marketplace removal."
+        }
         foreach ($mp in $marketplaces) {
             $mpName = ($mp -split '/')[-1]
             try {

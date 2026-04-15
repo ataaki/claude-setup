@@ -475,22 +475,27 @@ function Install-Plugins {
     Write-Host "  Step 3: Marketplaces & Plugins"
     Write-Host "============================================"
 
-    # --- Marketplaces ---
-    $marketplaces = @(
-        "anthropics/claude-plugins-official",
-        "obra/superpowers",
-        "upstash/context7",
-        "anthropics/claude-code"
-    )
+    # --- Marketplaces (loaded from config/marketplaces.txt) ---
+    $marketplacesFile = Join-Path $ScriptDir "config/marketplaces.txt"
+    if (-not (Test-Path $marketplacesFile)) {
+        Write-Warn "marketplaces.txt not found at $marketplacesFile - skipping marketplace setup"
+    } else {
+        $marketplaces = @(Get-Content $marketplacesFile | ForEach-Object {
+            $line = $_.Trim()
+            if ($line -and -not $line.StartsWith("#")) {
+                ($line -split '#')[0].Trim()
+            }
+        } | Where-Object { $_ })
 
-    foreach ($mp in $marketplaces) {
-        $mpName = ($mp -split '/')[-1]
-        Write-Info "Marketplace: $mp"
-        try {
-            & claude plugins marketplace add "https://github.com/$mp" 2>$null
-            Write-Success "  $mpName added"
-        } catch {
-            Write-Skip "  $mpName already present"
+        foreach ($mp in $marketplaces) {
+            $mpName = ($mp -split '/')[-1]
+            Write-Info "Marketplace: $mp"
+            try {
+                & claude plugins marketplace add "https://github.com/$mp" 2>$null
+                Write-Success "  $mpName added"
+            } catch {
+                Write-Skip "  $mpName already present"
+            }
         }
     }
 

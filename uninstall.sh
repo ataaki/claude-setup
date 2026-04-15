@@ -224,12 +224,20 @@ if ask_user "Also remove plugins installed by the setup?" "n"; then
 
         # Remove marketplaces added by install
         info "Removing marketplaces..."
-        MARKETPLACES=(
-            "anthropics/claude-plugins-official"
-            "obra/superpowers"
-            "upstash/context7"
-            "anthropics/claude-code"
-        )
+        MARKETPLACES_FILE="$SCRIPT_DIR/config/marketplaces.txt"
+        MARKETPLACES=()
+        if [ -f "$MARKETPLACES_FILE" ]; then
+            while IFS= read -r line || [ -n "$line" ]; do
+                [ -z "$line" ] && continue
+                [[ "$line" =~ ^# ]] && continue
+                line="${line%%#*}"
+                line="${line%"${line##*[![:space:]]}"}"
+                [ -z "$line" ] && continue
+                MARKETPLACES+=("$line")
+            done < "$MARKETPLACES_FILE"
+        else
+            warn "marketplaces.txt not found ($MARKETPLACES_FILE). Skipping marketplace removal."
+        fi
         for mp in "${MARKETPLACES[@]}"; do
             MP_NAME=$(echo "$mp" | cut -d'/' -f2)
             claude plugins marketplace remove "https://github.com/$mp" 2>/dev/null \

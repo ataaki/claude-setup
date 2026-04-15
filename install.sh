@@ -472,20 +472,28 @@ install_plugins() {
     echo "  Step 3: Marketplaces & Plugins"
     echo "============================================"
 
-    # --- Marketplaces ---
-    local MARKETPLACES=(
-        "anthropics/claude-plugins-official"
-        "obra/superpowers"
-        "upstash/context7"
-        "anthropics/claude-code"
-    )
+    # --- Marketplaces (loaded from shared config/marketplaces.txt) ---
+    local MARKETPLACES=()
+    local MARKETPLACES_FILE="$SCRIPT_DIR/config/marketplaces.txt"
+    if [ ! -f "$MARKETPLACES_FILE" ]; then
+        warn "marketplaces.txt not found at $MARKETPLACES_FILE — skipping marketplace setup"
+    else
+        while IFS= read -r line || [ -n "$line" ]; do
+            [ -z "$line" ] && continue
+            [[ "$line" =~ ^# ]] && continue
+            line="${line%%#*}"
+            line="${line%"${line##*[![:space:]]}"}"
+            [ -z "$line" ] && continue
+            MARKETPLACES+=("$line")
+        done < "$MARKETPLACES_FILE"
 
-    for mp in "${MARKETPLACES[@]}"; do
-        local MP_NAME
-        MP_NAME=$(echo "$mp" | cut -d'/' -f2)
-        info "Marketplace: $mp"
-        claude plugins marketplace add "https://github.com/$mp" 2>/dev/null && success "  $MP_NAME added" || skip "  $MP_NAME already present"
-    done
+        for mp in "${MARKETPLACES[@]}"; do
+            local MP_NAME
+            MP_NAME=$(echo "$mp" | cut -d'/' -f2)
+            info "Marketplace: $mp"
+            claude plugins marketplace add "https://github.com/$mp" 2>/dev/null && success "  $MP_NAME added" || skip "  $MP_NAME already present"
+        done
+    fi
 
     # --- Plugins (loaded from shared config/plugins.txt) ---
     local PLUGINS=()
